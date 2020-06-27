@@ -124,24 +124,58 @@ def process_create_album():
     conn.commit()
     return "form recieved"
 
-#Update route
-#1. we need a route to display the form PLUS the existing data
-#2. we need a route to process the form
+# the album_id parameter will hold the primary key of the album
+# that we are updating
+# e.g. /album/update/3 will mean to update album with the albumid of 3
+# only auto_increment can be primary key
 
-#display the form and existing information
+
+@app.route('/album/update/<album_id>')
+def show_update_album_form(album_id):
+    sql = f"select * from Album where AlbumId = {album_id}"
+    cursor.execute(sql)
+    # since there can only be one result (because we are getting an album by primary key)
+    # we use the fetchone function
+    album = cursor.fetchone()
+
+    cursor.execute("select * from Artist")
+
+    return render_template("update_album.template.html", all_artists=cursor, album=album)
+
+@app.route('/album/update/<album_id>', methods=["POST"])
+def process_update_album(album_id):
+    title = request.form.get('title')
+    artist = request.form.get('artist')
+    sql = f"""update Album set Title="{title}", ArtistId={artist}
+    where AlbumId={album_id}
+    """
+    cursor.execute(sql)
+    conn.commit()
+    print(sql)
+    return "form received"
+
+# Update route
+# 1. we need a route to display the form PLUS the existing data
+# 2. we need a route to process the form
+
+# display the form and existing information
+
+
 @app.route('/artist/update/<artist_id>')
 def display_update_artist_form(artist_id):
-    #the following should only have one result
+    # the following should only have one result
     sql = f"select * from Artist where ArtistId={artist_id}"
     cursor.execute(sql)
     artist = cursor.fetchone()
     return render_template('update_artist_form.template.html', artist=artist)
+
 
 @app.route('/artists')
 def show_all_artists():
     sql = "select * from Artist"
     cursor.execute(sql)
     return render_template('all_artists.template.html', all_artists=cursor)
+
 
 @app.route('/artist/update/<artist_id>', methods=["POST"])
 def process_update_artist(artist_id):
@@ -151,6 +185,7 @@ def process_update_artist(artist_id):
     cursor.execute(sql)
     conn.commit()
     return redirect(url_for('show_all_artists'))
+
 
 # "magic code" -- boilerplate
 if __name__ == '__main__':
